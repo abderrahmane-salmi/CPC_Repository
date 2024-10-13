@@ -118,6 +118,38 @@ impl Tree {
 
         0
     }
+
+    // Check BST
+    pub fn is_bst(&self, node_id: Option<usize>) -> bool {
+        if let Some(id) = node_id {
+            assert!(id < self.nodes.len(), "Node id is out of range");
+            let node = &self.nodes[id];
+
+
+            let is_bst_l = self.is_bst(node.id_left);
+            let is_bst_r = self.is_bst(node.id_right);
+
+            let left_condition = if let Some(left_id) = node.id_left {
+                let left_node = &self.nodes[left_id];
+                left_node.key <= node.key
+            } else {
+                true
+            };
+
+            let right_condition = if let Some(right_id) = node.id_right {
+                let right_node = &self.nodes[right_id];
+                right_node.key >= node.key
+            } else {
+                true
+            };
+
+            let is_bst_u = left_condition && right_condition;
+
+            return is_bst_u && is_bst_l && is_bst_r;
+        }
+
+        true
+    }
 }
 
 #[cfg(test)]
@@ -155,4 +187,6 @@ fn main() {
     tree.inorder();
     println!("\n");
     println!("{}", tree.subtree_size(Some(1)));
+
+    println!("{}", tree.is_bst(Some(0)));
 }
