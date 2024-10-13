@@ -85,6 +85,7 @@ impl Tree {
         0
     }
 
+    // TODO: Just for testing purposes
     pub fn inorder(&self) {
         self.inorder_rec(Some(0));
     }
@@ -100,6 +101,22 @@ impl Tree {
         }
 
         return;
+    }
+
+    // Sub tree size
+    pub fn subtree_size(&self, node_id: Option<usize>) -> u32 {
+        if let Some(id) = node_id {
+            assert!(id < self.nodes.len(), "Node id is out of range");
+            let node = &self.nodes[id];
+
+            let sl = self.subtree_size(node.id_left);
+            let sr = self.subtree_size(node.id_right);
+
+            let su = sl + sr + 1;
+            return su;
+        }
+
+        0
     }
 }
 
@@ -136,4 +153,6 @@ fn main() {
     tree.add_node(1, 9, false); // id 4
 
     tree.inorder();
+    println!("\n");
+    println!("{}", tree.subtree_size(Some(1)));
 }
