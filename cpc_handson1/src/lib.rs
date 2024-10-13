@@ -171,6 +171,29 @@ mod tests {
 
         assert_eq!(tree.sum(), 64);
     }
+
+    #[test]
+    fn test_is_bst() {
+        let mut tree = Tree::with_root(10);
+        
+        tree.add_node(0, 5, true);   // id 1
+        tree.add_node(0, 15, false); // id 2
+        
+        assert!(tree.is_bst()); // Should be true
+
+        // Add more nodes but keep the tree a BST
+        tree.add_node(1, 2, true);  // id 3
+        tree.add_node(1, 7, false); // id 4
+        tree.add_node(2, 12, true); // id 5
+        tree.add_node(2, 20, false); // id 6
+        
+        assert!(tree.is_bst()); // Should be true
+
+        // Add a new node that makes the tree not BST
+        tree.add_node(3, 6, true); // id 7
+        
+        assert!(!tree.is_bst()); // Should be false
+    }
 }
 
 fn main() {
