@@ -1,4 +1,3 @@
-
 pub struct Node {
     key: u32,
     id_left: Option<usize>,
@@ -119,36 +118,36 @@ impl Tree {
         0
     }
 
-    // Check BST
-    pub fn is_bst(&self, node_id: Option<usize>) -> bool {
+    // Exercise #1: Check if the binary tree is a Binary Search Tree (BST)
+    pub fn is_bst(&self) -> bool {
+        self.is_bst_rec(Some(0), None, None)
+    }
+
+    fn is_bst_rec(&self, node_id: Option<usize>, min: Option<u32>, max: Option<u32>) -> bool {
         if let Some(id) = node_id {
             assert!(id < self.nodes.len(), "Node id is out of range");
             let node = &self.nodes[id];
 
+            // Check if the current node satisfies the BST properties
+            if let Some(min_val) = min {
+                if node.key <= min_val {
+                    return false;
+                }
+            }
+            if let Some(max_val) = max {
+                if node.key >= max_val {
+                    return false;
+                }
+            }
 
-            let is_bst_l = self.is_bst(node.id_left);
-            let is_bst_r = self.is_bst(node.id_right);
+            // Check if the left and right subtrees are BST
+            let is_left_bst = self.is_bst_rec(node.id_left, min, Some(node.key));
+            let is_right_bst = self.is_bst_rec(node.id_right, Some(node.key), max);
 
-            let left_condition = if let Some(left_id) = node.id_left {
-                let left_node = &self.nodes[left_id];
-                left_node.key <= node.key
-            } else {
-                true
-            };
-
-            let right_condition = if let Some(right_id) = node.id_right {
-                let right_node = &self.nodes[right_id];
-                right_node.key >= node.key
-            } else {
-                true
-            };
-
-            let is_bst_u = left_condition && right_condition;
-
-            return is_bst_u && is_bst_l && is_bst_r;
+            is_left_bst && is_right_bst
+        } else {
+            true
         }
-
-        true
     }
 }
 
@@ -188,5 +187,5 @@ fn main() {
     println!("\n");
     println!("{}", tree.subtree_size(Some(1)));
 
-    println!("{}", tree.is_bst(Some(0)));
+    println!("{}", tree.is_bst());
 }
