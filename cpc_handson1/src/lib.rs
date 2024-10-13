@@ -84,6 +84,23 @@ impl Tree {
 
         0
     }
+
+    pub fn inorder(&self) {
+        self.inorder_rec(Some(0));
+    }
+
+    pub fn inorder_rec(&self, node_id: Option<usize>) {
+        if let Some(id) = node_id {
+            assert!(id < self.nodes.len(), "Node id is out of range");
+            let node = &self.nodes[id];
+
+            self.inorder_rec(node.id_left);
+            print!("{} ", node.key);
+            self.inorder_rec(node.id_right);
+        }
+
+        return;
+    }
 }
 
 #[cfg(test)]
@@ -106,4 +123,17 @@ mod tests {
 
         assert_eq!(tree.sum(), 64);
     }
+}
+
+fn main() {
+    println!("start main:");
+
+    let mut tree = Tree::with_root(15);
+    tree.add_node(0, 8, true); // id 1
+    tree.add_node(0, 20, false); // id 2
+
+    tree.add_node(1, 3, true); // id 3
+    tree.add_node(1, 9, false); // id 4
+
+    tree.inorder();
 }
