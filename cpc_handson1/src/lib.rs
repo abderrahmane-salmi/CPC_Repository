@@ -184,12 +184,12 @@ impl Tree {
     }
 
     pub fn max_path_sum(&self) -> u32 {
-        let max_sum = Cell::new(u32::MIN);
-        self.max_leaf_to_leaf_sum(Some(0), &max_sum);
-        max_sum.get()
+        let mut max_sum = u32::MIN;
+        self.max_leaf_to_leaf_sum(Some(0), &mut max_sum);
+        max_sum
     }
 
-    fn max_leaf_to_leaf_sum(&self, node_id: Option<usize>, max_sum: &Cell<u32>) -> u32 {
+    fn max_leaf_to_leaf_sum(&self, node_id: Option<usize>, max_sum: &mut u32) -> u32 {
         if let Some(id) = node_id {
             let node = &self.nodes[id];
 
@@ -199,18 +199,30 @@ impl Tree {
             }
 
             // Calculate sums for left and right subtrees
-            let left_sum = node.id_left.map(|left_id| self.max_leaf_to_leaf_sum(Some(left_id), max_sum));
-            let right_sum = node.id_right.map(|right_id| self.max_leaf_to_leaf_sum(Some(right_id), max_sum));
+            let left_sum = if let Some(left_id) = node.id_left {
+                self.max_leaf_to_leaf_sum(Some(left_id), max_sum)
+            } else {
+                0
+            };
+
+            let right_sum = if let Some(right_id) = node.id_right {
+                self.max_leaf_to_leaf_sum(Some(right_id), max_sum)
+            } else {
+                0
+            };
 
             // If both children exist, update the max_sum
-            if let (Some(left), Some(right)) = (left_sum, right_sum) {
-                max_sum.set(max_sum.get().max(left + node.key + right));
-                return node.key + left.max(right);
-            } else {
-                // If only one child exists, return that path sum
-                return node.key + left_sum.unwrap_or(0) + right_sum.unwrap_or(0);
+            if node.id_left.is_some() && node.id_right.is_some() {
+                let current_sum = left_sum + node.key + right_sum;
+                if current_sum > *max_sum {
+                    *max_sum = current_sum;
+                }
             }
+
+            // Return the maximum path sum of either the left or right subtree
+            return node.key + left_sum.max(right_sum);
         }
+
         0
     }
 }
