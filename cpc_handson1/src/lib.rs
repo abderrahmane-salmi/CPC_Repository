@@ -312,6 +312,7 @@ mod tests {
         tree.add_node(0, 3, false);
         tree.add_node(1, 4, false);
         tree.add_node(2, 5, false);
+        
         assert_eq!(tree.max_path_sum(), 0); // No path between two leaves
     }
 }
