@@ -41,12 +41,12 @@ impl Tree {
         );
         if is_left {
             assert!(
-                self.nodes[parent_id].id_left == None,
+                self.nodes[parent_id].id_left.is_none(),
                 "Parent node has the left child already set"
             );
         } else {
             assert!(
-                self.nodes[parent_id].id_right == None,
+                self.nodes[parent_id].id_right.is_none(),
                 "Parent node has the right child already set"
             );
         }
