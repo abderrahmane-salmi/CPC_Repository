@@ -185,12 +185,13 @@ impl Tree {
 
     pub fn max_path_sum(&self) -> u32 {
         let mut max_sum = u32::MIN;
-        self.max_leaf_to_leaf_sum(Some(0), &mut max_sum);
+        self.max_path_sum_rec(Some(0), &mut max_sum);
         max_sum
     }
 
-    fn max_leaf_to_leaf_sum(&self, node_id: Option<usize>, max_sum: &mut u32) -> u32 {
+    fn max_path_sum_rec(&self, node_id: Option<usize>, max_sum: &mut u32) -> u32 {
         if let Some(id) = node_id {
+            assert!(id < self.nodes.len(), "Node id is out of range");
             let node = &self.nodes[id];
 
             // If it's a leaf node, return its key
@@ -198,15 +199,16 @@ impl Tree {
                 return node.key;
             }
 
-            // Calculate sums for left and right subtrees
+            // Calculate the sum of the left subtree (if it exists)
             let left_sum = if let Some(left_id) = node.id_left {
-                self.max_leaf_to_leaf_sum(Some(left_id), max_sum)
+                self.max_path_sum_rec(Some(left_id), max_sum)
             } else {
                 0
             };
 
+            // Calculate the sum of the right subtree (if it exists)
             let right_sum = if let Some(right_id) = node.id_right {
-                self.max_leaf_to_leaf_sum(Some(right_id), max_sum)
+                self.max_path_sum_rec(Some(right_id), max_sum)
             } else {
                 0
             };
@@ -220,7 +222,7 @@ impl Tree {
             }
 
             // Return the maximum path sum of either the left or right subtree
-            return node.key + left_sum.max(right_sum);
+            return node.key + max(left_sum, right_sum);
         }
 
         0
