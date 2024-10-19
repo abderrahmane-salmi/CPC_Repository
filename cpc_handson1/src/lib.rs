@@ -193,9 +193,9 @@ mod tests {
         //      /    \
         //     5      15
         let mut tree = Tree::with_root(10);
-        tree.add_node(0, 5, true);   // id 1
+        tree.add_node(0, 5, true); // id 1
         tree.add_node(0, 15, false); // id 2
-        
+
         assert!(tree.is_bst()); // Should be true
 
         // Add more nodes but keep the tree a BST
@@ -205,11 +205,11 @@ mod tests {
         //     5      15
         //    / \    /  \
         //   2   7  12  20
-        tree.add_node(1, 2, true);  // id 3
+        tree.add_node(1, 2, true); // id 3
         tree.add_node(1, 7, false); // id 4
         tree.add_node(2, 12, true); // id 5
         tree.add_node(2, 20, false); // id 6
-        
+
         assert!(tree.is_bst()); // Should be true
 
         // Add a new node that makes the tree not BST
@@ -222,7 +222,7 @@ mod tests {
         //             /
         //            6
         tree.add_node(3, 6, true); // id 7
-        
+
         assert!(!tree.is_bst()); // Should be false
     }
 
@@ -232,7 +232,7 @@ mod tests {
         // Tree:
         //     12
         let tree = Tree::with_root(12);
-        
+
         assert_eq!(tree.max_path_sum(), u32::MIN); // MIN because there is no leaf-to-leaf path
 
         // Test case: tree with only two nodes //
@@ -242,7 +242,7 @@ mod tests {
         //   5
         let mut tree = Tree::with_root(10);
         tree.add_node(0, 5, true);
-        
+
         assert_eq!(tree.max_path_sum(), u32::MIN); // MIN because there is no leaf-to-leaf path
 
         // Test case: normal balanced tree //
@@ -286,17 +286,17 @@ mod tests {
         // Test case: Left-heavy tree //
         // Tree:
         //        1
-        //      / 
-        //     2 
-        //    / 
-        //   3 
+        //      /
+        //     2
+        //    /
+        //   3
         //  /
-        // 4 
+        // 4
         let mut tree = Tree::with_root(1);
         tree.add_node(0, 2, true); // id 1
         tree.add_node(1, 3, true); // id 2
         tree.add_node(2, 4, true); // id 3
-        
+
         assert_eq!(tree.max_path_sum(), 0); // No path between two leaves
 
         // Test case 4: Right-heavy tree
@@ -312,7 +312,7 @@ mod tests {
         tree.add_node(0, 3, false);
         tree.add_node(1, 4, false);
         tree.add_node(2, 5, false);
-        
+
         assert_eq!(tree.max_path_sum(), 0); // No path between two leaves
     }
 }
