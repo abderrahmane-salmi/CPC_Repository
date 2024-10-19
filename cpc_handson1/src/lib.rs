@@ -1,4 +1,5 @@
 use std::cmp::{max, min};
+use std::cell::Cell;
 
 pub struct Node {
     key: u32,
@@ -181,6 +182,37 @@ impl Tree {
             return (u32::MIN,u32::MIN);
         }
     }
+
+    pub fn max_path_sum(&self) -> u32 {
+        let max_sum = Cell::new(u32::MIN);
+        self.max_leaf_to_leaf_sum(Some(0), &max_sum);
+        max_sum.get()
+    }
+
+    fn max_leaf_to_leaf_sum(&self, node_id: Option<usize>, max_sum: &Cell<u32>) -> u32 {
+        if let Some(id) = node_id {
+            let node = &self.nodes[id];
+
+            // If it's a leaf node, return its key
+            if node.id_left.is_none() && node.id_right.is_none() {
+                return node.key;
+            }
+
+            // Calculate sums for left and right subtrees
+            let left_sum = node.id_left.map(|left_id| self.max_leaf_to_leaf_sum(Some(left_id), max_sum));
+            let right_sum = node.id_right.map(|right_id| self.max_leaf_to_leaf_sum(Some(right_id), max_sum));
+
+            // If both children exist, update the max_sum
+            if let (Some(left), Some(right)) = (left_sum, right_sum) {
+                max_sum.set(max_sum.get().max(left + node.key + right));
+                return node.key + left.max(right);
+            } else {
+                // If only one child exists, return that path sum
+                return node.key + left_sum.unwrap_or(0) + right_sum.unwrap_or(0);
+            }
+        }
+        0
+    }
 }
 
 #[cfg(test)]
@@ -229,31 +261,83 @@ mod tests {
 
     #[test]
     fn test_get_mps() {
+        // Simple tree with only two nodes
+        // Tree:
+        //     10
+        //    /
+        //   5
+        let mut tree = Tree::with_root(10);
+        tree.add_node(0, 5, true);
+        assert_eq!(tree.get_mps(), 15); // Path from 5 to 10
+
+        // Tree:
+        //        10
+        //      /    \
+        //     5      15
+        //    / \    /  \
+        //   3   7  12  20
+        // let mut tree = Tree::with_root(10);
+        // tree.add_node(0, 5, true);
+        // tree.add_node(0, 15, false);
+        // tree.add_node(1, 3, true);
+        // tree.add_node(1, 7, false);
+        // tree.add_node(2, 12, true);
+        // tree.add_node(2, 20, false);
+
+        // assert_eq!(tree.get_mps(), 57); // Maximum path is 7 -> 5 -> 10 -> 15 -> 20
+
+        // let mut tree = Tree::with_root(10);
+        // tree.add_node(0, 5, true); // left child of root
+        // tree.add_node(0, 22, false); // right child of root
+        // tree.add_node(1, 7, false); // right child of node 1
+        // tree.add_node(2, 20, true); // left child of node 2
+
+        // assert_eq!(tree.get_mps(), 57); // Max path sum should be 5 -> 10 -> 22 -> 20
+    }
+
+    #[test]
+    fn test_max_path_sum() {
         // Test case 1: Basic binary tree
         let mut tree = Tree::with_root(10);
         tree.add_node(0, 5, true);
         tree.add_node(0, 7, false);
         tree.add_node(1, 8, true);
         tree.add_node(1, 3, false);
-        assert_eq!(tree.get_mps(), 30); // Max path: 8 -> 5 -> 10 -> 7
+        assert_eq!(tree.max_path_sum(), 30); // Max path: 8 -> 5 -> 10 -> 7
 
         // Test case 2: Single node
         let tree = Tree::with_root(12);
-        assert_eq!(tree.get_mps(), u32::MIN); // Only one node, no leaf-to-leaf path.
+        assert_eq!(tree.max_path_sum(), u32::MIN); // Only one node, no leaf-to-leaf path.
 
         // Test case 3: Left-heavy tree
         let mut tree = Tree::with_root(1);
         tree.add_node(0, 2, true);
         tree.add_node(1, 3, true);
         tree.add_node(2, 4, true);
-        assert_eq!(tree.get_mps(), 0); // No path between two leaves.
+        assert_eq!(tree.max_path_sum(), 0); // No path between two leaves.
 
         // Test case 4: Right-heavy tree
         let mut tree = Tree::with_root(6);
         tree.add_node(0, 3, false);
         tree.add_node(1, 4, false);
         tree.add_node(2, 5, false);
-        assert_eq!(tree.get_mps(), 0); // No path between two leaves.
+        assert_eq!(tree.max_path_sum(), 0); // No path between two leaves.
+
+                // Tree:
+        //        10
+        //      /    \
+        //     5      15
+        //    / \    /  \
+        //   3   7  12  20
+        let mut tree = Tree::with_root(10);
+        tree.add_node(0, 5, true);
+        tree.add_node(0, 15, false);
+        tree.add_node(1, 3, true);
+        tree.add_node(1, 7, false);
+        tree.add_node(2, 12, true);
+        tree.add_node(2, 20, false);
+
+        assert_eq!(tree.max_path_sum(), 57); // Maximum path is 7 -> 5 -> 10 -> 15 -> 20
     }
 }
 
