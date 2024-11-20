@@ -122,41 +122,51 @@ impl SegmentTree {
         }
     }
 
+    // ----------------------
+
+    pub fn update_range(&mut self, l: usize, r: usize, t: i32) {
+        print!("Update range: [{}, {}] with {}\n", l, r, t);
+        self.print();
+        print!("Updating...\n");
+        
+        self.update_range_lazy(0, 0, self.n - 1, l-1, r-1, t); // todo check if l-1, r-1
+        
+        
+        self.print();
+    }
+
+
     // range update
-    fn update(&mut self, node: usize, start: usize, end: usize, l: usize, r: usize, t: i32) {
+    fn update_range_lazy(&mut self, curr_node_pos: usize, start: usize, end: usize, l: usize, r: usize, t: i32) {
         
         // make sure our tree is up-to-date by applying any lazy updates at the start
-        self.apply_lazy_update(node, start, end);
+        self.apply_lazy_update(curr_node_pos, start, end);
 
-        if start > r || end < l {
+        if start > r || end < l { // todo maybe start > end
             // no overlap, skip
             return;
         }
 
         if start >= l && end <= r {
             // total overlap
-            self.lazy[node] = t;
-            self.apply_lazy_update(node, start, end);
+            // update the current node
+            self.tree[curr_node_pos] = self.tree[curr_node_pos].min(t);
+
+            // if not a leaf, propagate a lazy update to children
+            if start != end {
+                self.lazy_min_or_set(left_child(curr_node_pos), t);
+                self.lazy_min_or_set(right_child(curr_node_pos), t);
+            }
+
         } else {
             // partial overlap
             let mid = (start + end) / 2;
             
-            self.update(left_child(node), start, mid, l, r, t);
-            self.update(right_child(node), mid + 1, end, l, r, t);
+            self.update_range_lazy(left_child(curr_node_pos), start, mid, l, r, t);
+            self.update_range_lazy(right_child(curr_node_pos), mid + 1, end, l, r, t);
             
-            self.tree[node] = self.tree[left_child(node)].max(self.tree[right_child(node)]);
+            self.tree[curr_node_pos] = self.tree[left_child(curr_node_pos)].max(self.tree[right_child(curr_node_pos)]);
         }
-    }
-
-    
-
-    // wrapper functions for update and max_query for easier access
-    pub fn update_range(&mut self, l: usize, r: usize, t: i32) {
-        print!("Update range: [{}, {}] with {}\n", l, r, t);
-        self.print();
-        print!("Updating...\n");
-        self.update(0, 0, self.n - 1, l, r, t);
-        self.print();
     }
 
     
@@ -290,7 +300,7 @@ pub fn main() {
         for query in queries {
             match query.2 {
                 Some(t) => segment_tree.update_range(query.0, query.1, t),
-                None => results.push(segment_tree.query_max(query.0, query.1)),
+                None => results.push(segment_tree.query_max(query.0, query.1).unwrap()),
             };
         }
 
