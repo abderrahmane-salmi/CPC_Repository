@@ -9,8 +9,11 @@ pub struct SegmentTree {
 }
 
 impl SegmentTree {
+
+    // --------------------- CONSTRUCTOR ---------------------
     
-    pub fn from_vec(a: &[i32]) -> Self {
+    // Initialize the segment tree from an array
+    pub fn init(a: &[i32]) -> Self {
         let length = a.len();
 
         let mut segment_tree = SegmentTree {
@@ -23,34 +26,37 @@ impl SegmentTree {
         segment_tree
     }
 
-    fn populate(&mut self, arr: &[i32], min_pos: usize, max_pos: usize, current_pos: usize) {
-        // Base case: leaves are the same as the data
-        if min_pos == max_pos {
-            self.tree[current_pos] = arr[max_pos];
+    // Populate the segment tree with the data
+    fn populate(
+        &mut self,
+        arr: &[i32],
+        start_pos: usize,
+        end_pos: usize,
+        curr_node_pos: usize
+    ) {
+        // base case: if the start and end positions are the same, then we are at a leaf node
+        if start_pos == end_pos {
+            self.tree[curr_node_pos] = arr[end_pos];
             return;
         }
 
-        let mid = (min_pos + max_pos) / 2;
-        let left_child = left_child(current_pos);
-        let right_child = right_child(current_pos);
+        // split the range into two halves and populate the left and right subtrees
+        let mid = (start_pos + end_pos) / 2;
 
-        // Left
-        self.populate(arr, min_pos, mid, left_child);
+        self.populate(arr, start_pos, mid, left_child(curr_node_pos));
+        self.populate(arr, mid + 1, end_pos, right_child(curr_node_pos));
 
-        // Right
-        self.populate(arr, mid + 1, max_pos, right_child);
-
-        // Combine
-        self.tree[current_pos] = self.tree[left_child].max(self.tree[right_child]);
+        // set the value of the current node to the max of the left and right children
+        self.tree[curr_node_pos] = self.tree[left_child(curr_node_pos)].max(self.tree[right_child(curr_node_pos)]);
     }
 
-    // ---------------------
+    // --------------------- MAX QUERY ---------------------
 
+    // max query in range [l, r]
     pub fn query_max(&mut self, l: usize, r: usize) -> Option<i32> {
         self.max_query_lazy(0, 0, self.n - 1, l-1, r-1)
     }
 
-    // max query in range [l, r]
     fn max_query_lazy(
         &mut self, 
         curr_node_pos: usize, 
@@ -118,14 +124,12 @@ impl SegmentTree {
         }
     }
 
-    // ----------------------
+    // ---------------------- RANGE UPDATE ----------------------
 
     pub fn update_range(&mut self, l: usize, r: usize, t: i32) {
         self.update_range_lazy(0, 0, self.n - 1, l-1, r-1, t);
     }
 
-
-    // range update
     fn update_range_lazy(&mut self, curr_node_pos: usize, start: usize, end: usize, l: usize, r: usize, t: i32) {
         
         // make sure our tree is up-to-date by applying any lazy updates at the start
@@ -157,8 +161,6 @@ impl SegmentTree {
             self.tree[curr_node_pos] = self.tree[left_child(curr_node_pos)].max(self.tree[right_child(curr_node_pos)]);
         }
     }
-
-    
 
     // TODO: remove print fun
     pub fn print(&self) {
@@ -211,7 +213,7 @@ impl<T> Test<T> {
     }
 }
 
-pub fn get_tests(directory: &str, file_number: usize) -> Test<i32> {
+pub fn load_test_files(directory: &str, file_number: usize) -> Test<i32> {
     let input_file_path = format!("{}/input{}.txt", directory, file_number);
     let output_file_path = format!("{}/output{}.txt", directory, file_number);
 
@@ -271,7 +273,7 @@ pub fn main() {
     let n = 10;
     for i in 0..n {
         // MAKE SURE THE DIRECTORY IS CORRECT
-        let test = get_tests("data/problem1", i);
+        let test = load_test_files("data/problem1", i);
         let data = test.get_data();
         let expected_outputs = test.get_expected_outputs();
         let queries = test.get_queries();
@@ -282,7 +284,7 @@ pub fn main() {
         println!("Queries: {:?}", queries);
         println!("Expected Outputs: {:?}", expected_outputs);
         
-        let mut segment_tree = SegmentTree::from_vec(data);
+        let mut segment_tree = SegmentTree::init(data);
 
         let mut results: Vec<i32> = Vec::new();
         for query in queries {
