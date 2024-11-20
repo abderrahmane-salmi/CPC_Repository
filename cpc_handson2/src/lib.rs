@@ -200,41 +200,37 @@ pub struct Test<T> {
 }
 
 impl<T> Test<T> {
-    pub fn get_data(&self) -> &Vec<T> {
+    pub fn data(&self) -> &Vec<T> {
         &self.data
     }
 
-    pub fn get_queries(&self) -> &Vec<(usize, usize, Option<i32>)> {
+    pub fn queries(&self) -> &Vec<(usize, usize, Option<i32>)> {
         &self.queries
     }
 
-    pub fn get_expected_outputs(&self) -> &Vec<i32> {
+    pub fn expected_outputs(&self) -> &Vec<i32> {
         &self.expected_outputs
     }
 }
 
-pub fn load_test_files(directory: &str, file_number: usize) -> Test<i32> {
-    let input_file_path = format!("{}/input{}.txt", directory, file_number);
-    let output_file_path = format!("{}/output{}.txt", directory, file_number);
+pub fn load_test(directory: &str, index: usize) -> Test<i32> {
+    let input_path = format!("{}/input{}.txt", directory, index);
+    let output_path = format!("{}/output{}.txt", directory, index);
 
-    let mut file_iter_input = BufReader::new(File::open(input_file_path).unwrap())
-        .lines()
-        .map(|x| x.unwrap());
+    let input_file = BufReader::new(File::open(input_path).unwrap());
+    let output_file = BufReader::new(File::open(output_path).unwrap());
 
-    let mut file_iter_output = BufReader::new(File::open(output_file_path).unwrap())
-        .lines()
-        .map(|x| x.unwrap());
+    let mut input_lines = input_file.lines().map(|line| line.unwrap());
+    let mut output_lines = output_file.lines().map(|line| line.unwrap());
 
-    // Read the first line for n and m
-    let mut binding = file_iter_input.next().unwrap();
-    let mut iter = binding.split_whitespace();
-    let _ = iter.next().unwrap().parse::<usize>().unwrap();
-    let m = iter.next().unwrap().parse::<usize>().unwrap();
+    let header = input_lines.next().unwrap();
+    let mut split_header = header.split_whitespace();
+    let _n = split_header.next().unwrap().parse::<usize>().unwrap();
+    let m = split_header.next().unwrap().parse::<usize>().unwrap();
 
-    // Read the second line for the array
-    binding = file_iter_input.next().unwrap();
-    iter = binding.split_whitespace();
-    let data = iter
+    let data_line = input_lines.next().unwrap();
+    let data = data_line
+        .split_whitespace()
         .map(|x| x.parse::<i32>().unwrap())
         .collect::<Vec<i32>>();
 
@@ -242,23 +238,24 @@ pub fn load_test_files(directory: &str, file_number: usize) -> Test<i32> {
     let mut expected_outputs = Vec::new();
 
     for _ in 0..m {
-        binding = file_iter_input.next().unwrap();
-        iter = binding.split_whitespace();
+        let query_line = input_lines.next().unwrap();
+        let mut split_query = query_line.split_whitespace();
 
-        // Update query
-        if iter.next().unwrap().parse::<usize>().unwrap() == 0 {
-            let l = iter.next().unwrap().parse::<usize>().unwrap();
-            let r = iter.next().unwrap().parse::<usize>().unwrap();
-            let k = iter.next().unwrap().parse::<i32>().unwrap();
+        let query_type = split_query.next().unwrap().parse::<usize>().unwrap();
+
+        if query_type == 0 {
+            // Update query
+            let l = split_query.next().unwrap().parse::<usize>().unwrap();
+            let r = split_query.next().unwrap().parse::<usize>().unwrap();
+            let k = split_query.next().unwrap().parse::<i32>().unwrap();
             queries.push((l, r, Some(k)));
-
-        // Max query
         } else {
-            let output = file_iter_output.next().unwrap().parse::<i32>().unwrap();
-            let l = iter.next().unwrap().parse::<usize>().unwrap();
-            let r = iter.next().unwrap().parse::<usize>().unwrap();
+            // Max query
+            let expected = output_lines.next().unwrap().parse::<i32>().unwrap();
+            let l = split_query.next().unwrap().parse::<usize>().unwrap();
+            let r = split_query.next().unwrap().parse::<usize>().unwrap();
             queries.push((l, r, None));
-            expected_outputs.push(output);
+            expected_outputs.push(expected);
         }
     }
 
@@ -273,23 +270,23 @@ pub fn main() {
     let n = 10;
     for i in 0..n {
         // MAKE SURE THE DIRECTORY IS CORRECT
-        let test = load_test_files("data/problem1", i);
-        let data = test.get_data();
-        let expected_outputs = test.get_expected_outputs();
-        let queries = test.get_queries();
+        let test = load_test("data/problem1", i);
+        let data = test.data();
+        let expected_outputs = test.expected_outputs();
+        let queries = test.queries();
 
         println!("\n------------------------------------");
-        println!("Test {}", i);
-        println!("Data: {:?}", data);
-        println!("Queries: {:?}", queries);
+        println!("Test {}", i + 1);
+        println!("Test Data: {:?}", data);
+        println!("Test Queries: {:?}", queries);
         println!("Expected Outputs: {:?}", expected_outputs);
         
         let mut segment_tree = SegmentTree::init(data);
 
-        let mut results: Vec<i32> = Vec::new();
+        let mut results = Vec::new();
         for query in queries {
             match query.2 {
-                Some(t) => segment_tree.update_range(query.0, query.1, t),
+                Some(value) => segment_tree.update_range(query.0, query.1, value),
                 None => results.push(segment_tree.query_max(query.0, query.1).unwrap()),
             };
         }
@@ -298,11 +295,12 @@ pub fn main() {
             results
                 .iter()
                 .zip(expected_outputs.iter())
-                .all(|(a, b)| a == b),
-            "Problem 1: test failed"
+                .all(|(result, expected)| result == expected),
+            "Test {} failed: outputs do not match expected values",
+            i + 1
         );
 
-        // Success message after assertion passes
-        println!("---------> Test {} succeeded!", i+1);
+        // Display success message after assertion
+        println!("---------> Test {} succeeded!", i + 1);
     }
 }
