@@ -5,19 +5,18 @@ use std::io::BufReader;
 pub struct SegmentTree {
     n: usize,
     tree: Vec<i32>,
-    lazy: Vec<i32>,
+    lazy: Vec<Option<i32>>,
 }
 
 impl SegmentTree {
-
-    // TODO: merge new and build functions
+    
     pub fn from_vec(a: &[i32]) -> Self {
         let length = a.len();
 
         let mut segment_tree = SegmentTree {
             n: length,
             tree: vec![0; 4 * length],
-            lazy: vec![i32::MAX; 4 * length],
+            lazy: vec![None; 4 * length],
         };
         
         segment_tree.populate(a, 0, length - 1, 0);
@@ -45,62 +44,89 @@ impl SegmentTree {
         self.tree[current_pos] = self.tree[left_child].max(self.tree[right_child]);
     }
 
-    // // initialize the segment tree with given array size n
-    // pub fn new(n: usize) -> Self {
-    //     SegmentTree {
-    //         n,
-    //         tree: vec![0; 4 * n],
-    //         lazy: vec![i32::MAX; 4 * n],
-    //     }
-    // }
+    // ---------------------
 
-    // // build the segment tree using the array values
-    // pub fn build(&mut self, arr: &[i32], node: usize, start: usize, end: usize) {
-    //     print!("{} {} {}\n", node, start, end);
-    //     if start == end {
-    //         // base case: this is a leaf node
-    //         print!("this is a leaf node {} {}\n", node, start);
-    //         self.tree[node] = arr[start];
-    //         return;
-    //     }
+    pub fn query_max(&mut self, l: usize, r: usize) -> Option<i32> {
+        print!("Query max: [{}, {}]\n", l, r);
+        let result = self.max_query_lazy(0, 0, self.n - 1, l-1, r-1); // maybe l-1, r-1?
+        self.print();
+        print!("Result: {}\n", result.unwrap_or(-1));
+        result
+    }
 
-    //     let mid = (start + end) / 2;
+    // max query in range [l, r]
+    fn max_query_lazy(
+        &mut self, 
+        curr_node_pos: usize, 
+        start: usize, 
+        end: usize, 
+        l: usize, 
+        r: usize
+    ) -> Option<i32> {
+        self.apply_lazy_update(curr_node_pos, start, end);
+
+        if start > r || end < l {
+            // no overlap
+            return None;
+        }
+
+        if start >= l && end <= r {
+            // total overlap
+            return Some(self.tree[curr_node_pos]);
+        }
+
+        // partial overlap
+        let mid = (start + end) / 2;
         
-    //     // left child
-    //     self.build(arr, left_child(node), start, mid);
+        let left_max = self.max_query_lazy(left_child(curr_node_pos), start, mid, l, r);
+        let right_max = self.max_query_lazy(right_child(curr_node_pos), mid + 1, end, l, r);
         
-    //     // right child
-    //     self.build(arr, right_child(node), mid + 1, end);
-        
-    //     // merge the children nodes
-    //     self.tree[node] = self.tree[left_child(node)].max(self.tree[right_child(node)]);
-    // }
+        match (left_max, right_max) {
+            // return the max of the two values
+            (Some(left_max), Some(right_max)) => Some(left_max.max(right_max)),
+            // return the value that is not None
+            (Some(left_max), None) => Some(left_max),
+            (None, Some(right_max)) => Some(right_max),
+            // return None if both values are None
+            (None, None) => None, // TODO check if this is correct
+        }
+    }
 
     // apply the lazy update to a node
-    fn apply_lazy(&mut self, node_pos: usize, start: usize, end: usize) {
-        if self.lazy[node_pos] == i32::MAX {
-            // there are no updates to apply
-            return;
+    fn apply_lazy_update(&mut self, node_pos: usize, start: usize, end: usize) {
+        if let Some(lazy_update_value) = self.lazy[node_pos] {
+            // update the current node
+            self.tree[node_pos] = self.tree[node_pos].min(lazy_update_value);
+            
+            // propagate the lazy value to the node's children if its not a leaf node
+            if start != end {
+                self.lazy_min_or_set(left_child(node_pos), lazy_update_value);
+                self.lazy_min_or_set(right_child(node_pos), lazy_update_value);
+            }
+
+            // clear the lazy value for this node
+            self.lazy[node_pos] = None;
         }
 
-        // apply the pending min operation to this segment
-        self.tree[node_pos] = self.tree[node_pos].min(self.lazy[node_pos]);
-        
-        // propagate the lazy value to the node's children if its not a leaf node
-        if start != end {
-            self.lazy[left_child(node_pos)] = self.lazy[left_child(node_pos)].min(self.lazy[node_pos]);
-            self.lazy[right_child(node_pos)] = self.lazy[right_child(node_pos)].min(self.lazy[node_pos]);
+        // otherwise, there is no lazy update to do
+    }
+
+    // set the lazy value for a node by taking the min between the current lazy value and the new lazy value
+    fn lazy_min_or_set(&mut self, node_pos: usize, new_lazy_value: i32) {
+        if let Some(old_lazy_value) = self.lazy[node_pos] {
+            // the lazy tree has a already value for this node, choose the min between this and the new lazy value
+            self.lazy[node_pos] = Some(old_lazy_value.min(new_lazy_value));
+        } else {
+            // the lazy tree has no value for this node, set the new lazy value
+            self.lazy[node_pos] = Some(new_lazy_value);
         }
-        
-        // clear the lazy value for this node
-        self.lazy[node_pos] = i32::MAX;
     }
 
     // range update
     fn update(&mut self, node: usize, start: usize, end: usize, l: usize, r: usize, t: i32) {
         
         // make sure our tree is up-to-date by applying any lazy updates at the start
-        self.apply_lazy(node, start, end);
+        self.apply_lazy_update(node, start, end);
 
         if start > r || end < l {
             // no overlap, skip
@@ -110,7 +136,7 @@ impl SegmentTree {
         if start >= l && end <= r {
             // total overlap
             self.lazy[node] = t;
-            self.apply_lazy(node, start, end);
+            self.apply_lazy_update(node, start, end);
         } else {
             // partial overlap
             let mid = (start + end) / 2;
@@ -122,28 +148,7 @@ impl SegmentTree {
         }
     }
 
-    // max query in range [l, r]
-    fn max_query(&mut self, node: usize, start: usize, end: usize, l: usize, r: usize) -> i32 {
-        self.apply_lazy(node, start, end);
-
-        if start > r || end < l {
-            // no overlap
-            return i32::MIN;
-        }
-
-        if start >= l && end <= r {
-            // total overlap
-            return self.tree[node];
-        }
-
-        // Partial overlap
-        let mid = (start + end) / 2;
-        
-        let left_max = self.max_query(left_child(node), start, mid, l, r);
-        let right_max = self.max_query(right_child(node), mid + 1, end, l, r);
-        
-        left_max.max(right_max)
-    }
+    
 
     // wrapper functions for update and max_query for easier access
     pub fn update_range(&mut self, l: usize, r: usize, t: i32) {
@@ -154,13 +159,7 @@ impl SegmentTree {
         self.print();
     }
 
-    pub fn query_max(&mut self, l: usize, r: usize) -> i32 {
-        print!("Query max: [{}, {}]\n", l, r);
-        let result = self.max_query(0, 0, self.n - 1, l, r);
-        self.print();
-        print!("Result: {}\n", result);
-        result
-    }
+    
 
     // TODO: add print fun
     pub fn print(&self) {
