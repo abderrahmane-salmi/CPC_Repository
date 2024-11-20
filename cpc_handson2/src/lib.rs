@@ -47,11 +47,7 @@ impl SegmentTree {
     // ---------------------
 
     pub fn query_max(&mut self, l: usize, r: usize) -> Option<i32> {
-        print!("Query max: [{}, {}]\n", l, r);
-        let result = self.max_query_lazy(0, 0, self.n - 1, l-1, r-1); // maybe l-1, r-1?
-        self.print();
-        print!("Result: {}\n", result.unwrap_or(-1));
-        result
+        self.max_query_lazy(0, 0, self.n - 1, l-1, r-1)
     }
 
     // max query in range [l, r]
@@ -125,14 +121,7 @@ impl SegmentTree {
     // ----------------------
 
     pub fn update_range(&mut self, l: usize, r: usize, t: i32) {
-        print!("Update range: [{}, {}] with {}\n", l, r, t);
-        self.print();
-        print!("Updating...\n");
-        
-        self.update_range_lazy(0, 0, self.n - 1, l-1, r-1, t); // todo check if l-1, r-1
-        
-        
-        self.print();
+        self.update_range_lazy(0, 0, self.n - 1, l-1, r-1, t);
     }
 
 
@@ -171,7 +160,7 @@ impl SegmentTree {
 
     
 
-    // TODO: add print fun
+    // TODO: remove print fun
     pub fn print(&self) {
         self.print_recursive(0, 0, self.n - 1);
     }
@@ -279,8 +268,7 @@ pub fn get_tests(directory: &str, file_number: usize) -> Test<i32> {
 }
 
 pub fn main() {
-    // todo update n
-    let n = 9;
+    let n = 10;
     for i in 0..n {
         let test = get_tests("data/problem1", i);
         let data = test.get_data();
@@ -293,8 +281,6 @@ pub fn main() {
         println!("Expected Outputs: {:?}", expected_outputs);
         
         let mut segment_tree = SegmentTree::from_vec(data);
-        // let mut segment_tree = SegmentTree::new(n);
-        // segment_tree.build(&data, 0, 0, n-1);
 
         let mut results: Vec<i32> = Vec::new();
         for query in queries {
@@ -309,7 +295,7 @@ pub fn main() {
                 .iter()
                 .zip(expected_outputs.iter())
                 .all(|(a, b)| a == b),
-            "Exercise 1: test failed!"
+            "Problem 1: test failed"
         );
     }
 }
