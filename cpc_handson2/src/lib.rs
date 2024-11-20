@@ -270,11 +270,13 @@ pub fn get_tests(directory: &str, file_number: usize) -> Test<i32> {
 pub fn main() {
     let n = 10;
     for i in 0..n {
+        // MAKE SURE THE DIRECTORY IS CORRECT
         let test = get_tests("data/problem1", i);
         let data = test.get_data();
         let expected_outputs = test.get_expected_outputs();
         let queries = test.get_queries();
 
+        println!("\n------------------------------------");
         println!("Test {}", i);
         println!("Data: {:?}", data);
         println!("Queries: {:?}", queries);
@@ -297,5 +299,8 @@ pub fn main() {
                 .all(|(a, b)| a == b),
             "Problem 1: test failed"
         );
+
+        // Success message after assertion passes
+        println!("---------> Test {} succeeded!", i+1);
     }
 }
