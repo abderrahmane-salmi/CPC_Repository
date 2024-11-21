@@ -173,60 +173,6 @@ impl SegmentTree {
         }
     }
 
-
-    // ---------------------- IS THERE ----------------------
-    pub fn query_normal(&mut self, l: usize, r: usize, k: i32) -> Option<i32> {
-        self.q(0, 0, self.n - 1, l, r, k)
-    }
-
-    fn q(
-        &mut self,
-        current: usize,
-        start: usize,
-        end: usize,
-        l: usize,
-        r: usize,
-        k: i32,
-    ) -> Option<i32> {
-        // No overlap
-        if start > r || end < l {
-            return None;
-        }
-
-        // Total overlap
-        if start >= l && end <= r {
-            return self.lower_bound_search(current, k);
-        }
-
-        // Partial overlap
-        let mid = (start + end) / 2;
-        let left = self.q(left_child(current), start, mid, l, r, k);
-        let right = self.q(right_child(current), mid + 1, end, l, r, k);
-        match (left, right) {
-            (Some(l), Some(r)) => Some(l.min(r)),
-            (Some(l), None) => Some(l),
-            (None, Some(r)) => Some(r),
-            _ => None,
-        }
-    }
-
-    fn lower_bound_search(&mut self, current: usize, k: i32) -> Option<i32> {
-        if current >= self.tree.len() || self.tree[current] > k {
-            return None;
-        }
-
-        if self.tree[current] == k {
-            return Some(self.tree[current]);
-        }
-
-        let left_result = self.lower_bound_search(left_child(current), k);
-        let right_result = self.lower_bound_search(right_child(current), k);
-        if left_result.is_some() {
-            return left_result;
-        }
-        right_result
-    }
-
     // ---------------------- IS THERE ----------------------
 
      // Build segment tree from a frequency array
@@ -271,25 +217,21 @@ impl SegmentTree {
         left_exists || right_exists
     }
 
-    // ---------------------- PRINT ----------------------
-
-    // TODO: remove print fun
-    pub fn print(&self) {
-        self.print_recursive(0, 0, self.n - 1);
-    }
-
-    // Helper function to print the segment tree recursively
-    fn print_recursive(&self, pos: usize, left: usize, right: usize) {
-        println!(
-            "Node: {}, Range: [{}, {}], Value: {:?}, Lazy: {:?}",
-            pos, left, right, self.tree[pos], self.lazy[pos]
-        );
-
-        if left != right {
-            let mid = (left + right) / 2;
-            self.print_recursive(left_child(pos), left, mid);
-            self.print_recursive(right_child(pos), mid + 1, right);
+    fn lower_bound_search(&mut self, current: usize, k: i32) -> Option<i32> {
+        if current >= self.tree.len() || self.tree[current] > k {
+            return None;
         }
+
+        if self.tree[current] == k {
+            return Some(self.tree[current]);
+        }
+
+        let left_result = self.lower_bound_search(left_child(current), k);
+        let right_result = self.lower_bound_search(right_child(current), k);
+        if left_result.is_some() {
+            return left_result;
+        }
+        right_result
     }
     
 }
@@ -504,21 +446,6 @@ pub fn problem2() {
         println!("queries: {:?}", queries);
         println!("expected_outputs: {:?}", expected_outputs);
 
-        let mut results: Vec<i32> = Vec::new();
-        for query in queries {
-            if let Some(v) = query.2 {
-                results.push(
-                    if segment_tree.query_normal(query.0, query.1, v).is_some() {
-                        1
-                    } else {
-                        0
-                    },
-                )
-            };
-        }
-
-        println!("results: {:?}", results);
-
         let data_usize: Vec<(usize, usize)> = data.iter().map(|&(x, y)| (x as usize, y as usize)).collect();
         println!("data_usize: {:?}", data_usize);
         let results2 = process_is_there_queries(data.len(), &data_usize, &queries);
@@ -526,7 +453,7 @@ pub fn problem2() {
         println!("results2: {:?}", results2);
 
         assert!(
-            results
+            results2
                 .iter()
                 .zip(expected_outputs.iter())
                 .all(|(a, b)| a == b),
