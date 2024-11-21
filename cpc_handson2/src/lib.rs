@@ -297,11 +297,6 @@ impl<T> TestFile<T> {
     }
 }
 
-pub fn main() {
-    // problem1();
-    problem2();
-}
-
 pub fn problem1() {
     println!("***************** Problem 1 *****************");
 
@@ -504,4 +499,13 @@ pub fn load_test_file2(directory: &str, file_number: usize) -> TestFile<(i32, i3
         queries,
         expected_outputs,
     }
+}
+
+
+// ---------------------- MAIN ----------------------
+
+pub fn main() {
+    problem1();
+    println!("\n");
+    problem2();
 }
