@@ -255,12 +255,12 @@ pub fn right_child(index: usize) -> usize {
 }
 
 // Builds a frequency array to track the coverage of positions based on the input segments
-fn build_frequency_array(n: usize, segments: &[(usize, usize)]) -> Vec<i32> {
+fn build_frequency_array(n: usize, segments_array: &[(usize, usize)]) -> Vec<i32> {
     // freq[x] = how many segments cover the position x
     let mut freq = vec![0; n + 1];
 
     // for each segment (l, r), increment freq[l] and decrement freq[r+1] (using a differential array technique)
-    for &(l, r) in segments {
+    for &(l, r) in segments_array {
         freq[l] += 1;
         if r + 1 < n {
             freq[r + 1] -= 1;
@@ -277,13 +277,13 @@ fn build_frequency_array(n: usize, segments: &[(usize, usize)]) -> Vec<i32> {
 }
 
 // data structure to help us manupulate and manage the files
-pub struct Test<T> {
+pub struct TestFile<T> {
     data: Vec<T>,
     queries: Vec<(usize, usize, Option<i32>)>,
     expected_outputs: Vec<i32>,
 }
 
-impl<T> Test<T> {
+impl<T> TestFile<T> {
     pub fn data(&self) -> &Vec<T> {
         &self.data
     }
@@ -297,7 +297,107 @@ impl<T> Test<T> {
     }
 }
 
-pub fn load_test(directory: &str, index: usize) -> Test<i32> {
+pub fn main() {
+    // problem1();
+    problem2();
+}
+
+pub fn problem1() {
+    println!("***************** Problem 1 *****************");
+
+    let n = 10; // number of files
+    for i in 0..n {
+        println!("\n------------------------------------ Test {}", i + 1);
+        
+        // MAKE SURE THE DIRECTORY IS CORRECT
+        let test = load_test_file1("data/problem1", i);
+        
+        let array = test.data();
+        let queries = test.queries();
+        let expected_outputs = test.expected_outputs();
+
+        println!("Test Data: {:?}", array);
+        println!("Test Queries: {:?}", queries);
+        println!("Expected Outputs: {:?}", expected_outputs);
+        
+        // create a segment tree with the given array
+        let node_function = NodeFunction::Max;
+        let mut segment_tree = SegmentTree::init(array, &node_function);
+
+        // apply the queries to the segment tree
+        let mut results = Vec::new();
+        for query in queries {
+            match query.2 {
+                Some(value) => segment_tree.update_range(query.0, query.1, value),
+                None => results.push(segment_tree.max_query(query.0, query.1).unwrap()),
+            };
+        }
+
+        assert!(
+            results
+                .iter()
+                .zip(expected_outputs.iter())
+                .all(|(result, expected)| result == expected),
+            "Test {} failed: outputs do not match expected values",
+            i + 1
+        );
+
+        println!("---------> Test {} succeeded!", i + 1);
+    }
+    println!("***************** Problem 1: all tests succeeded! *****************");
+}
+
+pub fn problem2() {
+    println!("***************** Problem 2 *****************");
+
+    let n = 7; // number of files
+    for i in 0..n {
+        println!("\n------------------------------------ Test {}", i + 1);
+
+        // MAKE SURE THE DIRECTORY IS CORRECT
+        let test = load_test_file2("data/problem2", i);
+
+        let array = test.data();
+        let queries = test.queries();
+        let expected_outputs = test.expected_outputs();
+
+        println!("data: {:?}", array);
+        println!("queries: {:?}", queries);
+        println!("expected_outputs: {:?}", expected_outputs);
+
+        // build the frequency array
+        let data_usize: Vec<(usize, usize)> = array.iter().map(|&(x, y)| (x as usize, y as usize)).collect();
+        let freq = build_frequency_array(array.len(), &data_usize);
+
+        // create a segment tree with the frequency array
+        let node_function = NodeFunction::Min;
+        let mut segment_tree = SegmentTree::init(&freq, &node_function);
+        
+        // apply the queries to the segment tree
+        let mut results = Vec::new();
+        for &(i, j, k) in queries {
+            let exists = segment_tree.exists_exact_coverage(i, j, k.unwrap());
+            results.push(if exists { 1 } else { 0 });
+        }
+
+        println!("results: {:?}", results);
+
+        assert!(
+            results
+                .iter()
+                .zip(expected_outputs.iter())
+                .all(|(a, b)| a == b),
+            "Test {} failed: outputs do not match expected values",
+            i + 1
+        );
+
+        println!("---------> Test {} succeeded!", i + 1);
+    }
+    println!("***************** Problem 2: all tests succeeded! *****************");
+}
+
+// load test files for problem 1
+pub fn load_test_file1(directory: &str, index: usize) -> TestFile<i32> {
     let input_path = format!("{}/input{}.txt", directory, index);
     let output_path = format!("{}/output{}.txt", directory, index);
 
@@ -343,103 +443,15 @@ pub fn load_test(directory: &str, index: usize) -> Test<i32> {
         }
     }
 
-    Test {
+    TestFile {
         data,
         queries,
         expected_outputs,
     }
 }
 
-pub fn main() {
-    // problem1();
-    problem2();
-}
-
-pub fn problem1() {
-    let n = 10;
-    for i in 0..n {
-        // MAKE SURE THE DIRECTORY IS CORRECT
-        let test = load_test("data/problem1", i);
-        let data = test.data();
-        let expected_outputs = test.expected_outputs();
-        let queries = test.queries();
-
-        println!("\n------------------------------------");
-        println!("Test {}", i + 1);
-        println!("Test Data: {:?}", data);
-        println!("Test Queries: {:?}", queries);
-        println!("Expected Outputs: {:?}", expected_outputs);
-        
-        let node_function = NodeFunction::Max;
-        let mut segment_tree = SegmentTree::init(data, &node_function);
-
-        let mut results = Vec::new();
-        for query in queries {
-            match query.2 {
-                Some(value) => segment_tree.update_range(query.0, query.1, value),
-                None => results.push(segment_tree.max_query(query.0, query.1).unwrap()),
-            };
-        }
-
-        assert!(
-            results
-                .iter()
-                .zip(expected_outputs.iter())
-                .all(|(result, expected)| result == expected),
-            "Test {} failed: outputs do not match expected values",
-            i + 1
-        );
-
-        println!("---------> Test {} succeeded!", i + 1);
-    }
-}
-
-pub fn problem2() {
-    println!("***************** Problem 2 *****************");
-
-    let n = 7;
-    for i in 0..n {
-        println!("\n------------------------------------ Test {}", i + 1);
-
-        let test = load_test_files2("data/problem2", i);
-
-        let data = test.data();
-        let queries = test.queries();
-        let expected_outputs = test.expected_outputs();
-
-        println!("data: {:?}", data);
-        println!("queries: {:?}", queries);
-        println!("expected_outputs: {:?}", expected_outputs);
-
-        let data_usize: Vec<(usize, usize)> = data.iter().map(|&(x, y)| (x as usize, y as usize)).collect();
-        println!("data_usize: {:?}", data_usize);
-
-        let freq = build_frequency_array(data.len(), &data_usize);
-
-        let node_function = NodeFunction::Min;
-        let mut segment_tree = SegmentTree::init(&freq, &node_function);
-        
-        let mut results = Vec::new();
-        for &(i, j, k) in queries {
-            let exists = segment_tree.exists_exact_coverage(i, j, k.unwrap());
-            results.push(if exists { 1 } else { 0 });
-        }
-
-        println!("results: {:?}", results);
-
-        assert!(
-            results
-                .iter()
-                .zip(expected_outputs.iter())
-                .all(|(a, b)| a == b),
-            "Problem 2: test failed!"
-        );
-
-        println!("---------> Test {} succeeded!", i + 1);
-    }
-}
-
-pub fn load_test_files2(directory: &str, file_number: usize) -> Test<(i32, i32)> {
+// load test files for problem 2
+pub fn load_test_file2(directory: &str, file_number: usize) -> TestFile<(i32, i32)> {
     let input_file_path = format!("{}/input{}.txt", directory, file_number);
     let output_file_path = format!("{}/output{}.txt", directory, file_number);
 
@@ -487,7 +499,7 @@ pub fn load_test_files2(directory: &str, file_number: usize) -> Test<(i32, i32)>
         })
         .unzip();
 
-    Test {
+    TestFile {
         data,
         queries,
         expected_outputs,
