@@ -8,12 +8,17 @@ pub struct SegmentTree {
     lazy: Vec<Option<i32>>,
 }
 
+enum NodeFunction {
+    Min,
+    Max,
+}
+
 impl SegmentTree {
 
     // --------------------- CONSTRUCTOR ---------------------
     
     // Initialize the segment tree from an array
-    pub fn init(a: &[i32]) -> Self {
+    pub fn init(a: &[i32], node_function: &NodeFunction) -> Self {
         let length = a.len();
 
         let mut segment_tree = SegmentTree {
@@ -22,7 +27,7 @@ impl SegmentTree {
             lazy: vec![None; 4 * length],
         };
         
-        segment_tree.populate(a, 0, length - 1, 0);
+        segment_tree.populate(a, 0, length - 1, 0, node_function);
         segment_tree
     }
 
@@ -32,7 +37,8 @@ impl SegmentTree {
         arr: &[i32],
         start_pos: usize,
         end_pos: usize,
-        curr_node_pos: usize
+        curr_node_pos: usize,
+        node_function: &NodeFunction
     ) {
         // base case: if the start and end positions are the same, then we are at a leaf node
         if start_pos == end_pos {
@@ -43,11 +49,16 @@ impl SegmentTree {
         // split the range into two halves and populate the left and right subtrees
         let mid = (start_pos + end_pos) / 2;
 
-        self.populate(arr, start_pos, mid, left_child(curr_node_pos));
-        self.populate(arr, mid + 1, end_pos, right_child(curr_node_pos));
+        self.populate(arr, start_pos, mid, left_child(curr_node_pos), node_function);
+        self.populate(arr, mid + 1, end_pos, right_child(curr_node_pos), node_function);
 
         // set the value of the current node to the max of the left and right children
-        self.tree[curr_node_pos] = self.tree[left_child(curr_node_pos)].max(self.tree[right_child(curr_node_pos)]);
+        // TODO min for 2 and max for 1
+        self.tree[curr_node_pos] = match node_function {
+            NodeFunction::Min => self.tree[left_child(curr_node_pos)].min(self.tree[right_child(curr_node_pos)]),
+            NodeFunction::Max => self.tree[left_child(curr_node_pos)].max(self.tree[right_child(curr_node_pos)]),
+        };
+        // self.tree[curr_node_pos] = self.tree[left_child(curr_node_pos)].min(self.tree[right_child(curr_node_pos)]);
     }
 
     // --------------------- MAX QUERY ---------------------
@@ -162,6 +173,125 @@ impl SegmentTree {
         }
     }
 
+
+    // ---------------------- IS THERE ----------------------
+    pub fn query_normal(&mut self, l: usize, r: usize, k: i32) -> Option<i32> {
+        self.q(0, 0, self.n - 1, l, r, k)
+    }
+
+    fn q(
+        &mut self,
+        current: usize,
+        start: usize,
+        end: usize,
+        l: usize,
+        r: usize,
+        k: i32,
+    ) -> Option<i32> {
+        // No overlap
+        if start > r || end < l {
+            return None;
+        }
+
+        // Total overlap
+        if start >= l && end <= r {
+            return self.lower_bound_search(current, k);
+        }
+
+        // Partial overlap
+        let mid = (start + end) / 2;
+        let left = self.q(left_child(current), start, mid, l, r, k);
+        let right = self.q(right_child(current), mid + 1, end, l, r, k);
+        match (left, right) {
+            (Some(l), Some(r)) => Some(l.min(r)),
+            (Some(l), None) => Some(l),
+            (None, Some(r)) => Some(r),
+            _ => None,
+        }
+    }
+
+    fn lower_bound_search(&mut self, current: usize, k: i32) -> Option<i32> {
+        if current >= self.tree.len() || self.tree[current] > k {
+            return None;
+        }
+
+        if self.tree[current] == k {
+            return Some(self.tree[current]);
+        }
+
+        let left_result = self.lower_bound_search(left_child(current), k);
+        let right_result = self.lower_bound_search(right_child(current), k);
+        if left_result.is_some() {
+            return left_result;
+        }
+        right_result
+    }
+
+    // ---------------------- IS THERE ----------------------
+
+     // Build segment tree from a frequency array
+     pub fn build_from_frequency(freq: &[i32], node_function: &NodeFunction) -> Self {
+        println!("Building Segment Tree from frequency array: {:?}", freq);
+        Self::init(freq, &node_function)
+    }
+
+    // Check if there exists a position within range [l, r] with exactly `k` segments covering it
+    pub fn exists_exact_coverage(&mut self, l: usize, r: usize, k: i32) -> bool {
+        println!("Querying range [{}, {}] for exact coverage of {}", l, r, k);
+        self.range_exact_check(0, 0, self.n - 1, l, r, k)
+    }
+
+    // Helper function for exact coverage check in a range
+    fn range_exact_check(
+        &mut self,
+        curr_node_pos: usize,
+        start: usize,
+        end: usize,
+        l: usize,
+        r: usize,
+        k: i32
+    ) -> bool {
+        // Apply any pending lazy updates
+        self.apply_lazy_update(curr_node_pos, start, end);
+
+        // No overlap
+        if start > r || end < l {
+            return false;
+        }
+
+        // Total overlap
+        if start >= l && end <= r {
+            let has_exact_coverage = self.tree[curr_node_pos] == k;
+            if has_exact_coverage {
+                println!(
+                    "Node {} at range [{}, {}] has exact coverage {}",
+                    curr_node_pos, start, end, k
+                );
+                return true;
+            } else {
+                println!(
+                    "Node {} at range [{}, {}] does not have exact coverage {} (current value: {})",
+                    curr_node_pos, start, end, k, self.tree[curr_node_pos]
+                );
+                return false;
+            }
+            // println!(
+            //     "Node {} at range [{}, {}] has exact coverage {}: {}",
+            //     curr_node_pos, start, end, k, self.tree[curr_node_pos]
+            // );
+            // return self.tree[curr_node_pos] == k;
+        }
+
+        // Partial overlap
+        let mid = (start + end) / 2;
+        let left_exists = self.range_exact_check(left_child(curr_node_pos), start, mid, l, r, k);
+        let right_exists = self.range_exact_check(right_child(curr_node_pos), mid + 1, end, l, r, k);
+
+        left_exists || right_exists
+    }
+
+    // ---------------------- PRINT ----------------------
+
     // TODO: remove print fun
     pub fn print(&self) {
         self.print_recursive(0, 0, self.n - 1);
@@ -190,6 +320,45 @@ pub fn left_child(index: usize) -> usize {
 
 pub fn right_child(index: usize) -> usize {
     index * 2 + 2
+}
+
+// Utility function to build frequency array
+fn build_frequency_array(n: usize, segments: &[(usize, usize)]) -> Vec<i32> {
+    let mut freq = vec![0; n + 1];
+
+    for &(l, r) in segments {
+        freq[l] += 1;
+        if r + 1 < n {
+            freq[r + 1] -= 1;
+        }
+    }
+
+    // Accumulate to get coverage at each position
+    for i in 1..n {
+        freq[i] += freq[i - 1];
+    }
+
+    // freq.pop(); // Remove extra element due to (n+1) initialization
+    println!("Frequency array after accumulation: {:?}", freq);
+    freq
+}
+
+// Main function to process queries
+fn process_is_there_queries(n: usize, segments: &[(usize, usize)], queries: &[(usize, usize, Option<i32>)]) -> Vec<i32> {
+    let freq = build_frequency_array(n, segments);
+
+    let node_function = NodeFunction::Min;
+
+    let mut segment_tree = SegmentTree::build_from_frequency(&freq, &node_function);
+    let mut results = Vec::new();
+
+    for &(i, j, k) in queries {
+        let exists = segment_tree.exists_exact_coverage(i, j, k.unwrap());
+        results.push(if exists { 1 } else { 0 });
+    }
+
+    println!("Results of queries: {:?}", results);
+    results
 }
 
 // data structure to help us manupulate and manage the files
@@ -267,6 +436,11 @@ pub fn load_test(directory: &str, index: usize) -> Test<i32> {
 }
 
 pub fn main() {
+    // problem1();
+    problem2();
+}
+
+pub fn problem1() {
     let n = 10;
     for i in 0..n {
         // MAKE SURE THE DIRECTORY IS CORRECT
@@ -281,7 +455,8 @@ pub fn main() {
         println!("Test Queries: {:?}", queries);
         println!("Expected Outputs: {:?}", expected_outputs);
         
-        let mut segment_tree = SegmentTree::init(data);
+        let node_function = NodeFunction::Max;
+        let mut segment_tree = SegmentTree::init(data, &node_function);
 
         let mut results = Vec::new();
         for query in queries {
@@ -300,7 +475,134 @@ pub fn main() {
             i + 1
         );
 
-        // Display success message after assertion
         println!("---------> Test {} succeeded!", i + 1);
+    }
+}
+
+pub fn problem2() {
+    println!("***************** Problem 2 *****************");
+
+    let n = 7;
+    for i in 0..n {
+        println!("\n------------------------------------ Test {}", i + 1);
+
+        let test = get_tests_ex2("data/problem2", i);
+
+        let data = test.data();
+
+        assert_eq!(
+            test.queries().len(),
+            test.expected_outputs().len(),
+            "Error in reading test data"
+        );
+
+        // Count array
+        let mut count = vec![0; data.len() + 1];
+        for &elem in data {
+            count[elem.0 as usize] += 1;
+            count[elem.1 as usize + 1] -= 1;
+        }
+
+        // Prefix sums array
+        let mut prefix_sum: Vec<i32> = vec![0; data.len() + 1];
+        prefix_sum[0] = count[0];
+        for i in 1..data.len() {
+            prefix_sum[i] = prefix_sum[i - 1] + count[i];
+        }
+
+        // Last element is useless for the segment tree
+        // prefix_sum.pop();
+
+        // Actually we only need propagate because we are not updating any values
+        let node_function = NodeFunction::Min;
+        let mut segment_tree = SegmentTree::init(&prefix_sum, &node_function);
+        // segment_tree.print();
+
+        let queries = test.queries();
+        let expected_outputs = test.expected_outputs();
+
+        println!("data: {:?}", data);
+        println!("queries: {:?}", queries);
+        println!("expected_outputs: {:?}", expected_outputs);
+
+        let mut results: Vec<i32> = Vec::new();
+        for query in queries {
+            if let Some(v) = query.2 {
+                results.push(
+                    if segment_tree.query_normal(query.0, query.1, v).is_some() {
+                        1
+                    } else {
+                        0
+                    },
+                )
+            };
+        }
+
+        println!("results: {:?}", results);
+
+        let data_usize: Vec<(usize, usize)> = data.iter().map(|&(x, y)| (x as usize, y as usize)).collect();
+        let results2 = process_is_there_queries(data.len(), &data_usize, &queries);
+
+        println!("results2: {:?}", results2);
+
+        assert!(
+            results
+                .iter()
+                .zip(expected_outputs.iter())
+                .all(|(a, b)| a == b),
+            "Exercise 2: test failed!"
+        );
+
+        println!("---------> Test {} succeeded!", i + 1);
+    }
+}
+
+pub fn get_tests_ex2(directory: &str, file_number: usize) -> Test<(i32, i32)> {
+    let input_file_path = format!("{}/input{}.txt", directory, file_number);
+    let output_file_path = format!("{}/output{}.txt", directory, file_number);
+
+    let mut file_iter_input = BufReader::new(File::open(input_file_path).unwrap())
+        .lines()
+        .map(|x| x.unwrap());
+
+    let mut file_iter_output = BufReader::new(File::open(output_file_path).unwrap())
+        .lines()
+        .map(|x| x.unwrap());
+
+    // Read the first line for n and m
+    let mut binding = file_iter_input.next().unwrap();
+    let mut iter = binding.split_whitespace();
+    let n = iter.next().unwrap().parse::<usize>().unwrap();
+    let m = iter.next().unwrap().parse::<usize>().unwrap();
+
+    let mut data = Vec::with_capacity(n);
+
+    for _ in 0..n {
+        binding = file_iter_input.next().unwrap();
+        iter = binding.split_whitespace();
+        let x = iter.next().unwrap().parse::<i32>().unwrap();
+        let y = iter.next().unwrap().parse::<i32>().unwrap();
+        data.push((x, y));
+    }
+
+    let mut queries = Vec::new();
+    let mut expected_outputs = Vec::new();
+
+    for _ in 0..m {
+        binding = file_iter_input.next().unwrap();
+        iter = binding.split_whitespace();
+
+        let output = file_iter_output.next().unwrap().parse::<i32>().unwrap();
+        let l = iter.next().unwrap().parse::<usize>().unwrap();
+        let r = iter.next().unwrap().parse::<usize>().unwrap();
+        let k = iter.next().unwrap().parse::<i32>().unwrap();
+        queries.push((l, r, Some(k)));
+        expected_outputs.push(output);
+    }
+
+    Test {
+        data,
+        queries,
+        expected_outputs,
     }
 }
