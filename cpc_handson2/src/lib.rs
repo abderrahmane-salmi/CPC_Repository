@@ -401,7 +401,7 @@ pub fn problem2() {
     for i in 0..n {
         println!("\n------------------------------------ Test {}", i + 1);
 
-        let test = get_tests_ex2("data/problem2", i);
+        let test = load_test_files2("data/problem2", i);
 
         let data = test.data();
         let queries = test.queries();
@@ -439,48 +439,53 @@ pub fn problem2() {
     }
 }
 
-pub fn get_tests_ex2(directory: &str, file_number: usize) -> Test<(i32, i32)> {
+pub fn load_test_files2(directory: &str, file_number: usize) -> Test<(i32, i32)> {
     let input_file_path = format!("{}/input{}.txt", directory, file_number);
     let output_file_path = format!("{}/output{}.txt", directory, file_number);
 
-    let mut file_iter_input = BufReader::new(File::open(input_file_path).unwrap())
-        .lines()
-        .map(|x| x.unwrap());
+    // Open input and output files
+    let input_file = BufReader::new(File::open(input_file_path).unwrap());
+    let output_file = BufReader::new(File::open(output_file_path).unwrap());
 
-    let mut file_iter_output = BufReader::new(File::open(output_file_path).unwrap())
-        .lines()
-        .map(|x| x.unwrap());
+    let mut input_lines = input_file.lines().map(|x| x.unwrap());
+    let mut output_lines = output_file.lines().map(|x| x.unwrap());
 
-    // Read the first line for n and m
-    let mut binding = file_iter_input.next().unwrap();
-    let mut iter = binding.split_whitespace();
-    let n = iter.next().unwrap().parse::<usize>().unwrap();
-    let m = iter.next().unwrap().parse::<usize>().unwrap();
+    // Read n and m
+    let (n, m) = {
+        let first_line = input_lines.next().unwrap();
+        let mut split = first_line.split_whitespace();
+        (
+            split.next().unwrap().parse().unwrap(),
+            split.next().unwrap().parse().unwrap(),
+        )
+    };
 
-    let mut data = Vec::with_capacity(n);
+    // Collect data
+    let data: Vec<(i32, i32)> = (0..n)
+        .map(|_| {
+            let line = input_lines.next().unwrap();
+            let mut split = line.split_whitespace();
+            (
+                split.next().unwrap().parse().unwrap(),
+                split.next().unwrap().parse().unwrap(),
+            )
+        })
+        .collect();
 
-    for _ in 0..n {
-        binding = file_iter_input.next().unwrap();
-        iter = binding.split_whitespace();
-        let x = iter.next().unwrap().parse::<i32>().unwrap();
-        let y = iter.next().unwrap().parse::<i32>().unwrap();
-        data.push((x, y));
-    }
+    // Collect queries and expected outputs
+    let (queries, expected_outputs): (Vec<_>, Vec<_>) = (0..m)
+        .map(|_| {
+            let query_line = input_lines.next().unwrap();
+            let output = output_lines.next().unwrap().parse::<i32>().unwrap();
 
-    let mut queries = Vec::new();
-    let mut expected_outputs = Vec::new();
+            let mut split = query_line.split_whitespace();
+            let l = split.next().unwrap().parse().unwrap();
+            let r = split.next().unwrap().parse().unwrap();
+            let k = split.next().unwrap().parse().unwrap();
 
-    for _ in 0..m {
-        binding = file_iter_input.next().unwrap();
-        iter = binding.split_whitespace();
-
-        let output = file_iter_output.next().unwrap().parse::<i32>().unwrap();
-        let l = iter.next().unwrap().parse::<usize>().unwrap();
-        let r = iter.next().unwrap().parse::<usize>().unwrap();
-        let k = iter.next().unwrap().parse::<i32>().unwrap();
-        queries.push((l, r, Some(k)));
-        expected_outputs.push(output);
-    }
+            ((l, r, Some(k)), output)
+        })
+        .unzip();
 
     Test {
         data,
