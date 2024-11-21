@@ -8,7 +8,7 @@ pub struct SegmentTree {
     lazy: Vec<Option<i32>>,
 }
 
-enum NodeFunction {
+pub enum NodeFunction {
     Min,
     Max,
 }
@@ -231,13 +231,11 @@ impl SegmentTree {
 
      // Build segment tree from a frequency array
      pub fn build_from_frequency(freq: &[i32], node_function: &NodeFunction) -> Self {
-        println!("Building Segment Tree from frequency array: {:?}", freq);
         Self::init(freq, &node_function)
     }
 
     // Check if there exists a position within range [l, r] with exactly `k` segments covering it
     pub fn exists_exact_coverage(&mut self, l: usize, r: usize, k: i32) -> bool {
-        println!("Querying range [{}, {}] for exact coverage of {}", l, r, k);
         self.range_exact_check(0, 0, self.n - 1, l, r, k)
     }
 
@@ -262,17 +260,10 @@ impl SegmentTree {
         // Total overlap
         if start >= l && end <= r {
             let has_exact_coverage = self.tree[curr_node_pos] == k;
+            // TODO
             if has_exact_coverage {
-                println!(
-                    "Node {} at range [{}, {}] has exact coverage {}",
-                    curr_node_pos, start, end, k
-                );
                 return true;
             } else {
-                println!(
-                    "Node {} at range [{}, {}] does not have exact coverage {} (current value: {})",
-                    curr_node_pos, start, end, k, self.tree[curr_node_pos]
-                );
                 return false;
             }
             // println!(
@@ -339,7 +330,6 @@ fn build_frequency_array(n: usize, segments: &[(usize, usize)]) -> Vec<i32> {
     }
 
     // freq.pop(); // Remove extra element due to (n+1) initialization
-    println!("Frequency array after accumulation: {:?}", freq);
     freq
 }
 
@@ -357,7 +347,6 @@ fn process_is_there_queries(n: usize, segments: &[(usize, usize)], queries: &[(u
         results.push(if exists { 1 } else { 0 });
     }
 
-    println!("Results of queries: {:?}", results);
     results
 }
 
