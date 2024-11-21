@@ -230,7 +230,7 @@ impl SegmentTree {
     // ---------------------- IS THERE ----------------------
 
      // Build segment tree from a frequency array
-     pub fn build_from_frequency(freq: &[i32], node_function: &NodeFunction) -> Self {
+    pub fn build_from_frequency(freq: &[i32], node_function: &NodeFunction) -> Self {
         Self::init(freq, &node_function)
     }
 
@@ -250,7 +250,7 @@ impl SegmentTree {
         k: i32
     ) -> bool {
         // Apply any pending lazy updates
-        self.apply_lazy_update(curr_node_pos, start, end);
+        // self.apply_lazy_update(curr_node_pos, start, end);
 
         // No overlap
         if start > r || end < l {
@@ -259,13 +259,7 @@ impl SegmentTree {
 
         // Total overlap
         if start >= l && end <= r {
-            let has_exact_coverage = self.tree[curr_node_pos] == k;
-            // TODO
-            if has_exact_coverage {
-                return true;
-            } else {
-                return false;
-            }
+            return self.tree[curr_node_pos] == k;
             // println!(
             //     "Node {} at range [{}, {}] has exact coverage {}: {}",
             //     curr_node_pos, start, end, k, self.tree[curr_node_pos]
@@ -329,7 +323,7 @@ fn build_frequency_array(n: usize, segments: &[(usize, usize)]) -> Vec<i32> {
         freq[i] += freq[i - 1];
     }
 
-    // freq.pop(); // Remove extra element due to (n+1) initialization
+    freq.pop(); // Remove extra element due to (n+1) initialization
     freq
 }
 
@@ -500,7 +494,7 @@ pub fn problem2() {
         }
 
         // Last element is useless for the segment tree
-        // prefix_sum.pop();
+        prefix_sum.pop();
 
         // Actually we only need propagate because we are not updating any values
         let node_function = NodeFunction::Min;
@@ -530,6 +524,7 @@ pub fn problem2() {
         println!("results: {:?}", results);
 
         let data_usize: Vec<(usize, usize)> = data.iter().map(|&(x, y)| (x as usize, y as usize)).collect();
+        println!("data_usize: {:?}", data_usize);
         let results2 = process_is_there_queries(data.len(), &data_usize, &queries);
 
         println!("results2: {:?}", results2);
