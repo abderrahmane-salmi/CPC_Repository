@@ -250,7 +250,7 @@ impl SegmentTree {
         k: i32
     ) -> bool {
         // Apply any pending lazy updates
-        // self.apply_lazy_update(curr_node_pos, start, end);
+        self.apply_lazy_update(curr_node_pos, start, end);
 
         // No overlap
         if start > r || end < l {
@@ -259,12 +259,8 @@ impl SegmentTree {
 
         // Total overlap
         if start >= l && end <= r {
-            return self.tree[curr_node_pos] == k;
-            // println!(
-            //     "Node {} at range [{}, {}] has exact coverage {}: {}",
-            //     curr_node_pos, start, end, k, self.tree[curr_node_pos]
-            // );
             // return self.tree[curr_node_pos] == k;
+            return self.lower_bound_search(curr_node_pos, k).is_some();
         }
 
         // Partial overlap
@@ -534,7 +530,7 @@ pub fn problem2() {
                 .iter()
                 .zip(expected_outputs.iter())
                 .all(|(a, b)| a == b),
-            "Exercise 2: test failed!"
+            "Problem 2: test failed!"
         );
 
         println!("---------> Test {} succeeded!", i + 1);
