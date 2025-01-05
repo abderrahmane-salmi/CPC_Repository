@@ -1,29 +1,38 @@
 use std::fs::{File};
 use std::io::{self, BufRead, BufReader, Write};
 
-// This function implements the algorithm for calculating the maximum attractions
 fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
-    // Initialize the DP table with zero values
+    
+    // initialize the DP matrix with dimensions (D+1) x (n+1) and zero values
+    // D total days (rows) -- n cities considered (columns).
     let mut dp = vec![vec![0; n + 1]; d + 1];
 
-    // Loop over the number of days from 1 to D
+    // Loop through all days from 1 to D
     for days in 1..=d {
-        // Loop over the number of cities from 1 to n
+        // Loop through all cities from 1 to n
         for city in 1..=n {
-            // Case: No days spent in the current city
+            // Default case: assume that no days are spent in the current city, i.e. skip the current city
+            // PS: skipping a city means the best result for dp[d][c] is the same as dp[d][c-1] (the best result
+            // from the previous city).
             dp[days][city] = dp[days][city - 1];
             
-            // Try all possible ways to distribute the days across the cities
-            for spent in 0..=days {
-                // Find the maximum number of attractions possible by spending `spent` days in the current city
+            // Explore all ways to spend possible days to this city
+            for days_spent in 0..=days {
+                // Find the maximum number of attractions possible by spending days_spent in the current city
+                // here we can either skip the city (max param 1), or visit the city (max param 2) by adding
+                // the attractions gained to the best result from the remaining days
+
                 dp[days][city] = dp[days][city].max(
-                    dp[days - spent][city - 1] + attractions[city - 1][spent]
+                    dp[days - days_spent][city - 1] + attractions[city - 1][days_spent]
                 );
+
+                // ps: attractions[city - 1] because the city index is 1-based, but the attractions vector is 0-based
+                // ps: days - days_spent because we are considering the remaining days after spending days_spent in the current city
             }
         }
     }
 
-    // Return the result from the DP table, which is the maximum attractions visited with `d` days and `n` cities
+    // Return the result from the DP table, which is the maximum attractions visited with d days and n cities
     dp[d][n]
 }
 
