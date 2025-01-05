@@ -15,6 +15,12 @@ fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
             // PS: skipping a city means the best result for dp[d][c] is the same as dp[d][c-1] (the best result
             // from the previous city).
             dp[days][city] = dp[days][city - 1];
+
+            // Compute the prefix sum of attractions for this city
+            let mut prefix_sum = vec![0; d + 1];
+            for day in 1..=d.min(attractions[city - 1].len()) {
+                prefix_sum[day] = prefix_sum[day - 1] + attractions[city - 1][day - 1];
+            }
             
             // Explore all ways to spend possible days to this city
             for days_spent in 0..=days {
@@ -23,7 +29,7 @@ fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
                 // the attractions gained to the best result from the remaining days
 
                 dp[days][city] = dp[days][city].max(
-                    dp[days - days_spent][city - 1] + attractions[city - 1][days_spent]
+                    dp[days - days_spent][city - 1] + prefix_sum[days_spent]
                 );
 
                 // ps: attractions[city - 1] because the city index is 1-based, but the attractions vector is 0-based
@@ -52,15 +58,13 @@ fn run_tests_p1(directory: &str, nb_of_files: usize) {
             .collect::<Vec<_>>();
         let (n, d) = (first_line[0], first_line[1]);
 
-        // Parse the itineraries for each city and calculate cumulative sums
-        let mut attractions = vec![vec![0; d + 1]; n];
-        for i in 0..n {
+        // Parse the itineraries for each city without calculating cumulative sums
+        let mut attractions = vec![];
+        for _ in 0..n {
             let daily_values = input_file_lines.next().unwrap().split_whitespace()
                 .map(|x| x.parse::<usize>().unwrap())
                 .collect::<Vec<_>>();
-            for j in 0..d {
-                attractions[i][j + 1] = attractions[i][j] + daily_values[j]; // Cumulative sum
-            }
+            attractions.push(daily_values);
         }
 
         // Run the holiday planning algorithm
