@@ -17,6 +17,7 @@ fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
             dp[days][city] = dp[days][city - 1];
 
             // Compute the prefix sum of attractions for this city
+            // The goal is to efficiently calculate the total attractions for any subarray of days
             let mut prefix_sum = vec![0; d + 1];
             for day in 1..=d.min(attractions[city - 1].len()) {
                 prefix_sum[day] = prefix_sum[day - 1] + attractions[city - 1][day - 1];
