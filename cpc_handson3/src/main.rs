@@ -1,5 +1,5 @@
-use std::fs::{File};
-use std::io::{self, BufRead, BufReader, Write};
+use std::fs::File;
+use std::io::{self, BufRead, BufReader};
 
 fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
     
@@ -36,8 +36,8 @@ fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
     dp[d][n]
 }
 
-// This function processes all input files from 0 to 4, runs the algorithm, and compares the results
-fn process_all_tests() -> io::Result<()> {
+// Process all input files, run the algorithm on data, and compare the results and expected output
+fn run_tests_p1() -> io::Result<()> {
     // Loop through input files named input0.txt to input4.txt
     for i in 0..=4 {
         let input_file = format!("./data/problem1/input{}.txt", i);
@@ -94,6 +94,5 @@ fn process_all_tests() -> io::Result<()> {
 }
 
 fn main() -> io::Result<()> {
-    // Call the function to process all input files from 0 to 4 and compare the results
-    process_all_tests()
+    run_tests_p1()
 }
