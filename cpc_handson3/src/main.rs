@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{self, BufRead, BufReader};
+use std::io::{BufRead, BufReader};
 
 fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
     
@@ -37,17 +37,17 @@ fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
 }
 
 // Process all input files, run the algorithm on data, and compare the results and expected output
-fn run_tests_p1(directory: &str, nb_of_files: usize) -> io::Result<()> {
+fn run_tests_p1(directory: &str, nb_of_files: usize) {
     for i in 0..=nb_of_files {
         let input_file_path = format!("{}/input{}.txt", directory, i);
         let output_file_path = format!("{}/output{}.txt", directory, i);
 
         // Read the input file
-        let input_file = File::open(&input_file_path)?;
-        let mut input_file_lines = BufReader::new(input_file).lines();
+        let input_file = BufReader::new(File::open(input_file_path).unwrap());
+        let mut input_file_lines = input_file.lines().map(|line| line.unwrap());
 
         // Parse the first line for n and d
-        let first_line = input_file_lines.next().unwrap()?.split_whitespace()
+        let first_line = input_file_lines.next().unwrap().split_whitespace()
             .map(|x| x.parse::<usize>().unwrap())
             .collect::<Vec<_>>();
         let (n, d) = (first_line[0], first_line[1]);
@@ -55,7 +55,7 @@ fn run_tests_p1(directory: &str, nb_of_files: usize) -> io::Result<()> {
         // Parse the itineraries for each city and calculate cumulative sums
         let mut attractions = vec![vec![0; d + 1]; n];
         for i in 0..n {
-            let daily_values = input_file_lines.next().unwrap()?.split_whitespace()
+            let daily_values = input_file_lines.next().unwrap().split_whitespace()
                 .map(|x| x.parse::<usize>().unwrap())
                 .collect::<Vec<_>>();
             for j in 0..d {
@@ -85,7 +85,6 @@ fn run_tests_p1(directory: &str, nb_of_files: usize) -> io::Result<()> {
     }
 
     println!("All tests passed successfully!");  // Print a success message if all tests passed
-    Ok(())
 }
 
 fn main() {
