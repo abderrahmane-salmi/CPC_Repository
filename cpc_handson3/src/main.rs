@@ -36,7 +36,7 @@ fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
     dp[d][n]
 }
 
-// Process all input files, run the algorithm on data, and compare the results and expected output
+// read and parse data files, run the algorithm on input data, and compare the results with expected output
 fn run_tests_p1(directory: &str, nb_of_files: usize) {
     for i in 0..=nb_of_files {
         let input_file_path = format!("{}/input{}.txt", directory, i);
@@ -79,12 +79,12 @@ fn run_tests_p1(directory: &str, nb_of_files: usize) {
         // file.read_to_string(&mut expected_result)?;
         // let expected_result: usize = expected_result.trim().parse().unwrap();
 
-        // Assert that the result matches the expected result
+        // Assert that the algortihm result matches the expected result
         assert_eq!(result, expected_result, "Test {} failed", i);
         println!("Test {}: Success", i);
     }
 
-    println!("All tests passed successfully!");  // Print a success message if all tests passed
+    println!("All tests passed successfully!");
 }
 
 fn main() {
