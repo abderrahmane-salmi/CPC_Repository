@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+// ---------------------------------- PROBLEM 1 ----------------------------------
+
 fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
     
     // initialize the DP matrix with dimensions (D+1) x (n+1) and zero values
@@ -19,7 +21,7 @@ fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
             // Compute the prefix sum of attractions for this city
             // The goal is to efficiently calculate the total attractions for any subarray of days
             let mut prefix_sum = vec![0; d + 1];
-            for day in 1..=d.min(attractions[city - 1].len()) {
+            for day in 1..=attractions[city - 1].len() {
                 prefix_sum[day] = prefix_sum[day - 1] + attractions[city - 1][day - 1];
             }
             
@@ -43,8 +45,35 @@ fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
     dp[d][n]
 }
 
+// ---------------------------------- PROBLEM 2 ----------------------------------
+
+fn max_topics(topics: Vec<(usize, usize)>, n: usize) -> usize {
+
+    // DP table to keep track of the longest increasing subsequence (LIS) of difficulties
+    let mut lis = vec![1; n];
+    
+    // Sort topics by beauty
+    let mut sorted_topics = topics.clone();
+    sorted_topics.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| b.1.cmp(&a.1)));
+
+    for i in 1..n {
+        for j in 0..i {
+            // Contribution only if difficulty is greater than the other element's difficulty
+            if sorted_topics[i].1 > sorted_topics[j].1 {
+                lis[i] = lis[i].max(lis[j] + 1);
+            }
+        }
+    }
+
+    // The result is the maximum of the dynamic programming table
+    lis.into_iter().max().unwrap_or(0)
+}
+
+// ---------------------------------- TESTING ----------------------------------
+
 // read and parse data files, run the algorithm on input data, and compare the results with expected output
 fn run_tests_p1(directory: &str, nb_of_files: usize) {
+    println!("Running tests for Problem 1...");
     for i in 0..=nb_of_files {
         let input_file_path = format!("{}/input{}.txt", directory, i);
         let output_file_path = format!("{}/output{}.txt", directory, i);
@@ -92,6 +121,55 @@ fn run_tests_p1(directory: &str, nb_of_files: usize) {
     println!("All tests passed successfully!");
 }
 
+fn run_tests_p2(directory: &str, nb_of_files: usize) {
+    println!("Running tests for Problem 2...");
+    for i in 0..=nb_of_files {
+        let input_file_path = format!("{}/input{}.txt", directory, i);
+        let output_file_path = format!("{}/output{}.txt", directory, i);
+
+        // Read the input file
+        let input_file = BufReader::new(File::open(input_file_path).unwrap());
+        let mut input_file_lines = input_file.lines().map(|line| line.unwrap());
+
+        // Parse the first line for n
+        let first_line = input_file_lines.next().unwrap().split_whitespace()
+            .map(|x| x.parse::<usize>().unwrap())
+            .collect::<Vec<_>>();
+        let n = first_line[0];
+        // let n: usize = lines.next().unwrap().unwrap().parse().unwrap();
+
+        // Parse the itineraries for each city without calculating cumulative sums
+        let mut topics = Vec::with_capacity(n);
+        for _ in 0..n {
+            let topic_values: Vec<usize> = input_file_lines.next().unwrap().split_whitespace()
+                .map(|x| x.parse::<usize>().unwrap())
+                .collect();
+            topics.push((topic_values[0], topic_values[1])); // (beauty, difficulty)
+        }
+
+        // Run the algorithm
+        let result = max_topics(topics, n);
+
+        // Read the expected output from the output file
+        let mut file_iter_output = BufReader::new(File::open(output_file_path).unwrap())
+        .lines()
+        .map(|x| x.unwrap());
+        let binding = file_iter_output.next().unwrap();
+        let mut iter = binding.split_whitespace();
+        let expected_result = iter.next().unwrap().parse::<usize>().unwrap();
+
+        // Assert that the algortihm result matches the expected result
+        assert_eq!(result, expected_result, "Test {} failed", i);
+        println!("Test {}: Success", i);
+    }
+
+    println!("All tests passed successfully!");
+}
+
+// ---------------------------------- MAIN ----------------------------------
+
 fn main() {
     run_tests_p1("./data/problem1", 4);
+    println!();
+    run_tests_p2("./data/problem2", 10);
 }
