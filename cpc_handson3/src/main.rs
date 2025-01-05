@@ -48,26 +48,31 @@ fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
 // ---------------------------------- PROBLEM 2 ----------------------------------
 
 fn max_topics(topics: Vec<(usize, usize)>, n: usize) -> usize {
-
-    // DP table to keep track of the longest increasing subsequence (LIS) of difficulties
+    // Initialize the DP array, lis[i] will store the length of the longest increasing subsequence (LIS)
+    // that ends at the topic i. Initially, each topic can at least form a subsequence of length 1 (itself)
     let mut lis = vec![1; n];
-    
-    // Sort topics by beauty
+
+    // Sort topics by beauty in ascending order. If two topics have the same beauty, sort them by difficulty in descending order
     let mut sorted_topics = topics.clone();
     sorted_topics.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| b.1.cmp(&a.1)));
 
+    // Apply the Longest Increasing Subsequence (LIS) algorithm based on difficulty
     for i in 1..n {
+        // Compare each topic i with all previous topics j
         for j in 0..i {
-            // Contribution only if difficulty is greater than the other element's difficulty
+            // The difficulty must be greater than the previous topic's difficulty
+            // to maintain an increasing subsequence
             if sorted_topics[i].1 > sorted_topics[j].1 {
+                // Update the LIS value for topic i by taking the maximum between the current value and the j value + 1
                 lis[i] = lis[i].max(lis[j] + 1);
             }
         }
     }
 
-    // The result is the maximum of the dynamic programming table
-    lis.into_iter().max().unwrap_or(0)
+    // Return the maximum length found in LIS, which is the maximum number of topics that can be selected
+    lis.iter().max().unwrap().clone()
 }
+
 
 // ---------------------------------- TESTING ----------------------------------
 
