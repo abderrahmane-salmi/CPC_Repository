@@ -37,18 +37,17 @@ fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
 }
 
 // Process all input files, run the algorithm on data, and compare the results and expected output
-fn run_tests_p1() -> io::Result<()> {
-    // Loop through input files named input0.txt to input4.txt
-    for i in 0..=4 {
-        let input_file = format!("./data/problem1/input{}.txt", i);
-        let output_file = format!("./data/problem1/output{}.txt", i);
+fn run_tests_p1(directory: &str, nb_of_files: usize) -> io::Result<()> {
+    for i in 0..=nb_of_files {
+        let input_file_path = format!("{}/input{}.txt", directory, i);
+        let output_file_path = format!("{}/output{}.txt", directory, i);
 
         // Read the input file
-        let file = File::open(&input_file)?;
-        let mut lines = BufReader::new(file).lines();
+        let input_file = File::open(&input_file_path)?;
+        let mut input_file_lines = BufReader::new(input_file).lines();
 
-        // Parse the first line for `n` and `d`
-        let first_line = lines.next().unwrap()?.split_whitespace()
+        // Parse the first line for n and d
+        let first_line = input_file_lines.next().unwrap()?.split_whitespace()
             .map(|x| x.parse::<usize>().unwrap())
             .collect::<Vec<_>>();
         let (n, d) = (first_line[0], first_line[1]);
@@ -56,7 +55,7 @@ fn run_tests_p1() -> io::Result<()> {
         // Parse the itineraries for each city and calculate cumulative sums
         let mut attractions = vec![vec![0; d + 1]; n];
         for i in 0..n {
-            let daily_values = lines.next().unwrap()?.split_whitespace()
+            let daily_values = input_file_lines.next().unwrap()?.split_whitespace()
                 .map(|x| x.parse::<usize>().unwrap())
                 .collect::<Vec<_>>();
             for j in 0..d {
@@ -68,7 +67,7 @@ fn run_tests_p1() -> io::Result<()> {
         let result = holiday_planning(n, d, attractions);
 
         // Read the expected output from the output file
-        let mut file_iter_output = BufReader::new(File::open(output_file).unwrap())
+        let mut file_iter_output = BufReader::new(File::open(output_file_path).unwrap())
         .lines()
         .map(|x| x.unwrap());
         let binding = file_iter_output.next().unwrap();
@@ -81,18 +80,14 @@ fn run_tests_p1() -> io::Result<()> {
         // let expected_result: usize = expected_result.trim().parse().unwrap();
 
         // Assert that the result matches the expected result
-        if result == expected_result {
-            println!("Test {}: Success", i);  // Print success if the result matches
-        } else {
-            eprintln!("Test {}: Error. Expected {} but got {}", i, expected_result, result);  // Print error if the result does not match
-            return Err(io::Error::new(io::ErrorKind::Other, "Test failed"));
-        }
+        assert_eq!(result, expected_result, "Test {} failed", i);
+        println!("Test {}: Success", i);
     }
 
     println!("All tests passed successfully!");  // Print a success message if all tests passed
     Ok(())
 }
 
-fn main() -> io::Result<()> {
-    run_tests_p1()
+fn main() {
+    run_tests_p1("./data/problem1", 4);
 }
