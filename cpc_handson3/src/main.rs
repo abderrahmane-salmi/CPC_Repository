@@ -4,7 +4,6 @@ use std::io::{BufRead, BufReader};
 // ---------------------------------- PROBLEM 1 ----------------------------------
 
 fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
-    
     // initialize the DP matrix with dimensions (D+1) x (n+1) and zero values
     // D total days (rows) -- n cities considered (columns).
     let mut dp = vec![vec![0; n + 1]; d + 1];
@@ -24,16 +23,15 @@ fn holiday_planning(n: usize, d: usize, attractions: Vec<Vec<usize>>) -> usize {
             for day in 1..=attractions[city - 1].len() {
                 prefix_sum[day] = prefix_sum[day - 1] + attractions[city - 1][day - 1];
             }
-            
+
             // Explore all ways to spend possible days to this city
             for days_spent in 0..=days {
                 // Find the maximum number of attractions possible by spending days_spent in the current city
                 // here we can either skip the city (max param 1), or visit the city (max param 2) by adding
                 // the attractions gained to the best result from the remaining days
 
-                dp[days][city] = dp[days][city].max(
-                    dp[days - days_spent][city - 1] + prefix_sum[days_spent]
-                );
+                dp[days][city] =
+                    dp[days][city].max(dp[days - days_spent][city - 1] + prefix_sum[days_spent]);
 
                 // ps: attractions[city - 1] because the city index is 1-based, but the attractions vector is 0-based
                 // ps: days - days_spent because we are considering the remaining days after spending days_spent in the current city
@@ -73,7 +71,6 @@ fn max_topics(topics: Vec<(usize, usize)>, n: usize) -> usize {
     lis.iter().max().unwrap().clone()
 }
 
-
 // ---------------------------------- TESTING ----------------------------------
 
 // read and parse data files, run the algorithm on input data, and compare the results with expected output
@@ -88,7 +85,10 @@ fn run_tests_p1(directory: &str, nb_of_files: usize) {
         let mut input_file_lines = input_file.lines().map(|line| line.unwrap());
 
         // Parse the first line for n and d
-        let first_line = input_file_lines.next().unwrap().split_whitespace()
+        let first_line = input_file_lines
+            .next()
+            .unwrap()
+            .split_whitespace()
             .map(|x| x.parse::<usize>().unwrap())
             .collect::<Vec<_>>();
         let (n, d) = (first_line[0], first_line[1]);
@@ -96,7 +96,10 @@ fn run_tests_p1(directory: &str, nb_of_files: usize) {
         // Parse the itineraries for each city without calculating cumulative sums
         let mut attractions = vec![];
         for _ in 0..n {
-            let daily_values = input_file_lines.next().unwrap().split_whitespace()
+            let daily_values = input_file_lines
+                .next()
+                .unwrap()
+                .split_whitespace()
                 .map(|x| x.parse::<usize>().unwrap())
                 .collect::<Vec<_>>();
             attractions.push(daily_values);
@@ -107,8 +110,8 @@ fn run_tests_p1(directory: &str, nb_of_files: usize) {
 
         // Read the expected output from the output file
         let mut file_iter_output = BufReader::new(File::open(output_file_path).unwrap())
-        .lines()
-        .map(|x| x.unwrap());
+            .lines()
+            .map(|x| x.unwrap());
         let binding = file_iter_output.next().unwrap();
         let mut iter = binding.split_whitespace();
         let expected_result = iter.next().unwrap().parse::<usize>().unwrap();
@@ -137,7 +140,10 @@ fn run_tests_p2(directory: &str, nb_of_files: usize) {
         let mut input_file_lines = input_file.lines().map(|line| line.unwrap());
 
         // Parse the first line for n
-        let first_line = input_file_lines.next().unwrap().split_whitespace()
+        let first_line = input_file_lines
+            .next()
+            .unwrap()
+            .split_whitespace()
             .map(|x| x.parse::<usize>().unwrap())
             .collect::<Vec<_>>();
         let n = first_line[0];
@@ -146,7 +152,10 @@ fn run_tests_p2(directory: &str, nb_of_files: usize) {
         // Parse the itineraries for each city without calculating cumulative sums
         let mut topics = Vec::with_capacity(n);
         for _ in 0..n {
-            let topic_values: Vec<usize> = input_file_lines.next().unwrap().split_whitespace()
+            let topic_values: Vec<usize> = input_file_lines
+                .next()
+                .unwrap()
+                .split_whitespace()
                 .map(|x| x.parse::<usize>().unwrap())
                 .collect();
             topics.push((topic_values[0], topic_values[1])); // (beauty, difficulty)
@@ -157,8 +166,8 @@ fn run_tests_p2(directory: &str, nb_of_files: usize) {
 
         // Read the expected output from the output file
         let mut file_iter_output = BufReader::new(File::open(output_file_path).unwrap())
-        .lines()
-        .map(|x| x.unwrap());
+            .lines()
+            .map(|x| x.unwrap());
         let binding = file_iter_output.next().unwrap();
         let mut iter = binding.split_whitespace();
         let expected_result = iter.next().unwrap().parse::<usize>().unwrap();
